@@ -1,4 +1,5 @@
-name: "Purge cache"
+name: "Purge cache for Moe"
+
 description: Purge GitHub Actions cache
 inputs:
   debug:
