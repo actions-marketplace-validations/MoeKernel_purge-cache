@@ -1,26 +1,9 @@
 import * as github from '@actions/github';
 import * as core from '@actions/core';
 
-function setFailedWrongValue(input: string, value: string) {
-  core.setFailed(`Wrong value for the input '${input}': ${value}`);
-}
-
-enum Inputs {
-  Debug = "debug",
-  MaxAge = "max-age",
-  Token = "token",
-  CacheKey = "cache_key"
-}
-
 async function run() {
-  const debug = core.getInput(Inputs.Debug, { required: false }) === 'true';
-  const maxAge = core.getInput(Inputs.MaxAge, { required: true });
-  const maxDate = new Date(Date.now() - Number.parseInt(maxAge) * 1000);
-  if (maxDate === null) {
-    setFailedWrongValue(Inputs.MaxAge, maxAge);
-  }
-  const token = core.getInput(Inputs.Token, { required: true });
-  const cacheKey = core.getInput(Inputs.CacheKey, { required: false });
+  const cacheKey = core.getInput('cache_key', { required: false });
+  const token = core.getInput('token', { required: true });
   const octokit = github.getOctokit(token);
 
   if (!cacheKey) {
@@ -39,10 +22,6 @@ async function run() {
   if (!cacheToDelete || cacheToDelete.id === undefined) {
     core.warning(`No cache found with key ${cacheKey}.`);
     return;
-  }
-
-  if (debug) {
-    console.log(`Deleting cache with key ${cacheKey}`);
   }
 
   try {
