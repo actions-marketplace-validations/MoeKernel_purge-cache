@@ -9570,8 +9570,9 @@ function run() {
         }
         const accessed = core.getInput(Inputs.Accessed, { required: false }) === 'true';
         const created = core.getInput(Inputs.Created, { required: false }) === 'true';
-        const token = core.getInput(Inputs.Token, { required: false });
-        const cacheKey = core.getInput(Inputs.CacheKey, { required: false });
+        const token = core.getInput(Inputs.Token, { required: true });
+        const cacheKey = core.getInput(Inputs.CacheKey, { required: true }); // Leitura do novo parâmetro
+        console.log(`Valor do cache_key: ${cacheKey}`); // Adicionando para verificar o valor do cache_key
         const octokit = github.getOctokit(token);
         const results = [];
         for (let i = 1; i <= 100; i += 1) {
