@@ -36,6 +36,7 @@ jobs:
       - name: Purge caches
         uses: ./.
         with:
+          cache-key: true
           debug: true
           created: true
           accessed: true
