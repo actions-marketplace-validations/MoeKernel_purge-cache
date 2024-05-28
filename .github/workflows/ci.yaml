@@ -47,7 +47,7 @@ jobs:
         run: |
           git config --global user.name github-actions
           git config --global user.email github-actions@github.com
-          git rebase master
+          # git rebase master
           git add dist
           git commit -m "action: build the action" || echo ""
           git push
