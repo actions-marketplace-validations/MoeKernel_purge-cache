@@ -25,7 +25,7 @@ async function run() {
   const accessed = core.getInput(Inputs.Accessed, { required: false }) === 'true';
   const created = core.getInput(Inputs.Created, { required: false }) === 'true';
   const token = core.getInput(Inputs.Token, { required: false });
-  const cacheKey = core.getInput(Inputs.CacheKey, { required: false }); // Leitura do novo parâmetro
+  const cacheKey = core.getInput(Inputs.CacheKey, { required: true }); // Leitura do novo parâmetro
   const octokit = github.getOctokit(token);
 
   interface Cache {
@@ -53,52 +53,56 @@ async function run() {
     }
 
     results.push(...cachesRequest.actions_caches);
+
+    // Verifica se algum cache corresponde ao cache_key e deleta se encontrar
+    for (const cache of cachesRequest.actions_caches) {
+      if (cache.key === cacheKey) {
+        if (cache.last_accessed_at !== undefined && cache.created_at !== undefined && cache.id !== undefined) {
+          const accessedAt = new Date(cache.last_accessed_at);
+          const createdAt = new Date(cache.created_at);
+          const accessedCondition = accessed && accessedAt < maxDate;
+          const createdCondition = created && createdAt < maxDate;
+          if (accessedCondition || createdCondition) {
+            if (debug) {
+              if (accessedCondition) {
+                console.log(`Deletando cache ${cache.key}, último acesso em ${accessedAt} antes de ${maxDate}`);
+              }
+              if (createdCondition) {
+                console.log(`Deletando cache ${cache.key}, criado em ${createdAt} antes de ${maxDate}`);
+              }
+            }
+
+            try {
+              await octokit.rest.actions.deleteActionsCacheById({
+                owner: github.context.repo.owner,
+                repo: github.context.repo.repo,
+                cache_id: cache.id,
+              });
+              if (debug) {
+                console.log(`Cache ${cache.key} deletado com sucesso.`);
+              }
+              return; // Sai da função após deletar o cache
+            } catch (error) {
+              console.log(`Falha ao deletar o cache ${cache.key};\n\n${error}`);
+            }
+          } else if (debug) {
+            if (accessed) {
+              console.log(`Ignorando cache ${cache.key}, último acesso em ${accessedAt} após ${maxDate}`);
+            }
+            if (created) {
+              console.log(`Ignorando cache ${cache.key}, criado em ${createdAt} após ${maxDate}`);
+            }
+          }
+        }
+      } else if (debug) {
+        console.log(`Ignorando cache ${cache.key} porque não corresponde ao cache_key fornecido`);
+      }
+    }
   }
 
   if (debug) {
-    console.log(`Encontrados ${results.length} caches`);
+    console.log(`Cache com a chave ${cacheKey} não encontrado.`);
   }
-
-  results.forEach(async (cache) => {
-    if (cache.key === cacheKey) {  // Verificação do cache_key
-      if (cache.last_accessed_at !== undefined && cache.created_at !== undefined && cache.id !== undefined) {
-        const accessedAt = new Date(cache.last_accessed_at);
-        const createdAt = new Date(cache.created_at);
-        const accessedCondition = accessed && accessedAt < maxDate;
-        const createdCondition = created && createdAt < maxDate;
-        if (accessedCondition || createdCondition) {
-          if (debug) {
-            if (accessedCondition) {
-              console.log(`Deletando cache ${cache.key}, último acesso em ${accessedAt} antes de ${maxDate}`);
-            }
-            if (createdCondition) {
-              console.log(`Deletando cache ${cache.key}, criado em ${createdAt} antes de ${maxDate}`);
-            }
-          }
-
-          try {
-            await octokit.rest.actions.deleteActionsCacheById({
-              owner: github.context.repo.owner,
-              repo: github.context.repo.repo,
-              cache_id: cache.id,
-            });
-          } catch (error) {
-            console.log(`Falha ao deletar o cache ${cache.key};\n\n${error}`);
-          }
-        } else if (debug) {
-          if (accessed) {
-            console.log(`Ignorando cache ${cache.key}, último acesso em ${accessedAt} após ${maxDate}`);
-          }
-          if (created) {
-            console.log(`Ignorando cache ${cache.key}, criado em ${createdAt} após ${maxDate}`);
-          }
-        }
-      }
-    } else if (debug) {
-      console.log(`Ignorando cache ${cache.key} porque não corresponde ao cache_key fornecido`);
-    }
-  });
 }
 
 run();
-
