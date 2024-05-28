@@ -9,7 +9,6 @@ enum Inputs {
   Debug = "debug",
   MaxAge = "max-age",
   Accessed = "accessed",
-  Created = "created",
   Token = "token",
   CacheKey = "cache_key"
 }
@@ -21,20 +20,13 @@ async function run() {
   if (maxDate === null) {
     setFailedWrongValue(Inputs.MaxAge, maxAge);
   }
-  const accessed = core.getInput(Inputs.Accessed, { required: false }) === 'true';
-  const created = core.getInput(Inputs.Created, { required: false }) === 'true';
   const token = core.getInput(Inputs.Token, { required: true });
   const cacheKey = core.getInput(Inputs.CacheKey, { required: false });
   const octokit = github.getOctokit(token);
 
   interface Cache {
     id?: number | undefined;
-    ref?: string | undefined;
     key?: string | undefined;
-    version?: string | undefined;
-    last_accessed_at?: string | undefined;
-    created_at?: string | undefined;
-    size_in_bytes?: number | undefined;
   }
 
   const results: Cache[] = [];
@@ -47,7 +39,7 @@ async function run() {
       page: i
     });
 
-    if (cachesRequest.actions_caches.length == 0) {
+    if (cachesRequest.actions_caches.length === 0) {
       break;
     }
 
@@ -59,9 +51,9 @@ async function run() {
   }
 
   if (cacheKey) {
-    const cacheToDelete = results.find(cache => cache.key === cacheKey && cache.id !== undefined);
+    const cacheToDelete = results.find(cache => cache.key === cacheKey);
 
-    if (cacheToDelete) {
+    if (cacheToDelete && cacheToDelete.id !== undefined) {
       try {
         await octokit.rest.actions.deleteActionsCacheById({
           owner: github.context.repo.owner,
