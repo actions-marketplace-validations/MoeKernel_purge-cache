@@ -62,15 +62,21 @@ async function run() {
     const cacheToDelete = results.find(cache => cache.key === cacheKey);
 
     if (cacheToDelete && cacheToDelete.id !== undefined) {
-      try {
-        await octokit.rest.actions.deleteActionsCacheById({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          cache_id: cacheToDelete.id,
-        });
-        core.info(`Cache with key ${cacheKey} deleted successfully.`);
-      } catch (error) {
-        core.setFailed(`Failed to delete cache ${cacheKey};\n\n${error}`);
+      const cacheCreatedAt = new Date(cacheToDelete.created_at || '');
+      const cacheAgeInSeconds = Math.floor((Date.now() - cacheCreatedAt.getTime()) / 1000);
+      if (cacheAgeInSeconds <= Number.parseInt(maxAge)) {
+        try {
+          await octokit.rest.actions.deleteActionsCacheById({
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            cache_id: cacheToDelete.id,
+          });
+          core.info(`Cache with key ${cacheKey} deleted successfully.`);
+        } catch (error) {
+          core.setFailed(`Failed to delete cache ${cacheKey};\n\n${error}`);
+        }
+      } else if (debug) {
+        console.log(`Skipping cache deletion for ${cacheKey}: Cache age exceeds max-age.`);
       }
     } else {
       core.warning(`No cache found with key ${cacheKey}.`);
