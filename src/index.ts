@@ -76,41 +76,9 @@ async function run() {
       core.warning(`No cache found with key ${cacheKey}.`);
     }
   } else {
-    results.forEach(async (cache) => {
-      if (cache.last_accessed_at !== undefined && cache.created_at !== undefined && cache.id !== undefined) {
-        const accessedAt = new Date(cache.last_accessed_at);
-        const createdAt = new Date(cache.created_at);
-        const accessedCondition = accessed && accessedAt < maxDate;
-        const createdCondition = created && createdAt < maxDate;
-        if (accessedCondition || createdCondition) {
-          if (debug) {
-            if (accessedCondition) {
-              console.log(`Deleting cache ${cache.key}, last accessed at ${accessedAt} before ${maxDate}`);
-            }
-            if (createdCondition) {
-              console.log(`Deleting cache ${cache.key}, created at ${createdAt} before ${maxDate}`);
-            }
-          }
-
-          try {
-            await octokit.rest.actions.deleteActionsCacheById({
-              owner: github.context.repo.owner,
-              repo: github.context.repo.repo,
-              cache_id: cache.id,
-            });
-          } catch (error) {
-            console.log(`Failed to delete cache ${cache.key};\n\n${error}`);
-          }
-        } else if (debug) {
-          if (accessed) {
-            console.log(`Skipping cache ${cache.key}, last accessed at ${accessedAt} after ${maxDate}`);
-          }
-          if (created) {
-            console.log(`Skipping cache ${cache.key}, created at ${createdAt} after ${maxDate}`);
-          }
-        }
-      }
-    });
+    if (debug) {
+      console.log(`No cache key specified. Skipping cache deletion.`);
+    }
   }
 }
 
