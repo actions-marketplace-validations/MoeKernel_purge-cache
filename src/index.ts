@@ -11,7 +11,7 @@ enum Inputs {
   Accessed = "accessed",
   Created = "created",
   Token = "token",
-  CacheKey = "cache-key"
+  CacheKey = "cache_key"
 }
 
 async function run() {
