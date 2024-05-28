@@ -75,10 +75,8 @@ async function run() {
     } else {
       core.warning(`No cache found with key ${cacheKey}.`);
     }
-  } else {
-    if (debug) {
-      console.log(`No cache key specified. Skipping cache deletion.`);
-    }
+  } else if (debug) {
+    console.log(`No cache key specified. Skipping cache deletion.`);
   }
 }
 
