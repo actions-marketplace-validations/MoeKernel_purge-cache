@@ -61,7 +61,7 @@ async function run() {
   if (cacheKey) {
     const cacheToDelete = results.find(cache => cache.key === cacheKey);
 
-    if (cacheToDelete) {
+    if (cacheToDelete && cacheToDelete.id !== undefined) {
       try {
         await octokit.rest.actions.deleteActionsCacheById({
           owner: github.context.repo.owner,
