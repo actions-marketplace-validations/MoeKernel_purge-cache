@@ -25,7 +25,7 @@ async function run() {
   const accessed = core.getInput(Inputs.Accessed, { required: false }) === 'true';
   const created = core.getInput(Inputs.Created, { required: false }) === 'true';
   const token = core.getInput(Inputs.Token, { required: false });
-  const cacheKey = core.getInput(Inputs.CacheKey, { required: true }); // Leitura do novo parâmetro
+  const cacheKey = core.getInput(Inputs.CacheKey, { required: false });
   const octokit = github.getOctokit(token);
 
   interface Cache {
