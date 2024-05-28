@@ -6,15 +6,31 @@ This action allows the cache of GitHub Actions to be automatically purged
 
 See [action.yml](action.yml)
 
+## Changes in v3
 ```yaml
 steps:
-# Do other steps like checkout, install, compile, etc.
-- uses: MyAlbum/purge-cache@v2
+- uses: MoeKernel/purge-cache@v3
   with:
-    accessed: true # Purge caches by their last accessed time (default)
-    created: false # Purge caches by their created time (default)
-    max-age: 604800 # Leave only caches accessed in the last 7 days (default)
+    cache_key: 'CacheKey'
 ```
+
+## Changes in v2
+```yaml
+steps:
+- uses: MoeKernel/purge-cache@v2
+  with:
+    accessed: true
+    created: false
+    max-age: 604800
+```
+
+### Some Things
+- ``debug``: true # **Set to true to output debug info**
+- ``token``: $GITHUBTOKEN # **Set a GitHub token**
+- ``accessed``: true # **Purge caches by their last accessed time (default)**
+- ``created``: false # **Purge caches by their created time (default)**
+- ``max-age``: 604800 # **Leave only caches accessed in the last 7 days (default)**
+- ``cache_key``: 'YourCacheKeyName' **# define the keyname created in your cache/github-actions**
 
 ## Example workflow
 
@@ -32,14 +48,12 @@ Output debug data (defaults to `false`)
 
 ```yaml
 steps:
-# Do other steps like checkout, install, compile, etc.
-- uses: MyAlbum/purge-cache@v2
+- uses: Moekernel/purge-cache@v2
   with:
-    debug: true # Set to true to output debug info
+    debug: true
 ```
 
 ### Token
-
 Set a GitHub token, will default to `${github.token}`. This will probably not be nessesary as the default token should be sufficient. 
 
 In case custom `permissions` are set for the tokens used in your actions workflow, to purge existing caches, the permission:
@@ -50,8 +64,7 @@ needs to be available for the token.
 
 ```yaml
 steps:
-# Do other steps like checkout, install, compile, etc.
-- uses: MyAlbum/purge-cache@v2
+- uses: MoeKernel/purge-cache@v2
   with:
-    token: $GITHUBTOKEN # Set a GitHub token
+    token: $GITHUBTOKEN
 ```
