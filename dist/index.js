@@ -9557,7 +9557,7 @@ var Inputs;
     Inputs["Accessed"] = "accessed";
     Inputs["Created"] = "created";
     Inputs["Token"] = "token";
-    Inputs["CacheKey"] = "cache-key"; // Novo parâmetro
+    Inputs["CacheKey"] = "cache-key";
 })(Inputs || (Inputs = {}));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -9571,8 +9571,8 @@ function run() {
         const accessed = core.getInput(Inputs.Accessed, { required: false }) === 'true';
         const created = core.getInput(Inputs.Created, { required: false }) === 'true';
         const token = core.getInput(Inputs.Token, { required: true });
-        const cacheKey = core.getInput(Inputs.CacheKey, { required: true }); // Leitura do novo parâmetro
-        console.log(`Valor do cache_key: ${cacheKey}`); // Adicionando para verificar o valor do cache_key
+        const cacheKey = core.getInput(Inputs.CacheKey, { required: false });
+        console.log(`Valor do cache_key: ${cacheKey}`);
         const octokit = github.getOctokit(token);
         const results = [];
         for (let i = 1; i <= 100; i += 1) {
@@ -9586,7 +9586,6 @@ function run() {
                 break;
             }
             results.push(...cachesRequest.actions_caches);
-            // Verifica se algum cache corresponde ao cache_key e deleta se encontrar
             for (const cache of cachesRequest.actions_caches) {
                 if (cache.key === cacheKey) {
                     if (cache.last_accessed_at !== undefined && cache.created_at !== undefined && cache.id !== undefined) {
@@ -9612,7 +9611,7 @@ function run() {
                                 if (debug) {
                                     console.log(`Cache ${cache.key} deletado com sucesso.`);
                                 }
-                                return; // Sai da função após deletar o cache
+                                return;
                             }
                             catch (error) {
                                 console.log(`Falha ao deletar o cache ${cache.key};\n\n${error}`);
