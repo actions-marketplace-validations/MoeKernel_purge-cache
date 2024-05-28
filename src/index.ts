@@ -17,9 +17,9 @@ async function run() {
     per_page: 100
   });
 
-  const cacheToDelete = cachesRequest.actions_caches.find(cache => cache.key === cacheKey);
+  const cacheToDelete = cachesRequest.actions_caches.find(cache => cache.key === cacheKey && cache.id !== undefined);
 
-  if (!cacheToDelete || cacheToDelete.id === undefined) {
+  if (!cacheToDelete) {
     core.warning(`No cache found with key ${cacheKey}.`);
     return;
   }
@@ -28,7 +28,7 @@ async function run() {
     await octokit.rest.actions.deleteActionsCacheById({
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
-      cache_id: cacheToDelete.id,
+      cache_id: cacheToDelete.id!,
     });
     core.info(`Cache with key ${cacheKey} deleted successfully.`);
   } catch (error) {
