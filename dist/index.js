@@ -9557,7 +9557,7 @@ var Inputs;
     Inputs["Accessed"] = "accessed";
     Inputs["Created"] = "created";
     Inputs["Token"] = "token";
-    Inputs["CacheKey"] = "cache-key";
+    Inputs["CacheKey"] = "cache_key";
 })(Inputs || (Inputs = {}));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
