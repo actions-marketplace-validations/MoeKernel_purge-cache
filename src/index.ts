@@ -23,8 +23,8 @@ async function run() {
   }
   const accessed = core.getInput(Inputs.Accessed, { required: false }) === 'true';
   const created = core.getInput(Inputs.Created, { required: false }) === 'true';
-  const token = core.getInput(Inputs.Token, { required: false });
-  const cacheKey = core.getInput(Inputs.CacheKey, { required: true });
+  const token = core.getInput(Inputs.Token, { required: true });
+  const cacheKey = core.getInput(Inputs.CacheKey, { required: false });
   const octokit = github.getOctokit(token);
 
   interface Cache {
@@ -58,21 +58,59 @@ async function run() {
     console.log(`Found ${results.length} caches`);
   }
 
-  const cacheToDelete = results.find(cache => cache.key === cacheKey);
+  if (cacheKey) {
+    const cacheToDelete = results.find(cache => cache.key === cacheKey);
 
-  if (cacheToDelete) {
-    try {
-      await octokit.rest.actions.deleteActionsCacheById({
-        owner: github.context.repo.owner,
-        repo: github.context.repo.repo,
-        cache_id: cacheToDelete.id,
-      });
-      core.info(`Cache with key ${cacheKey} deleted successfully.`);
-    } catch (error) {
-      core.setFailed(`Failed to delete cache ${cacheKey};\n\n${error}`);
+    if (cacheToDelete) {
+      try {
+        await octokit.rest.actions.deleteActionsCacheById({
+          owner: github.context.repo.owner,
+          repo: github.context.repo.repo,
+          cache_id: cacheToDelete.id,
+        });
+        core.info(`Cache with key ${cacheKey} deleted successfully.`);
+      } catch (error) {
+        core.setFailed(`Failed to delete cache ${cacheKey};\n\n${error}`);
+      }
+    } else {
+      core.warning(`No cache found with key ${cacheKey}.`);
     }
   } else {
-    core.warning(`No cache found with key ${cacheKey}.`);
+    results.forEach(async (cache) => {
+      if (cache.last_accessed_at !== undefined && cache.created_at !== undefined && cache.id !== undefined) {
+        const accessedAt = new Date(cache.last_accessed_at);
+        const createdAt = new Date(cache.created_at);
+        const accessedCondition = accessed && accessedAt < maxDate;
+        const createdCondition = created && createdAt < maxDate;
+        if (accessedCondition || createdCondition) {
+          if (debug) {
+            if (accessedCondition) {
+              console.log(`Deleting cache ${cache.key}, last accessed at ${accessedAt} before ${maxDate}`);
+            }
+            if (createdCondition) {
+              console.log(`Deleting cache ${cache.key}, created at ${createdAt} before ${maxDate}`);
+            }
+          }
+
+          try {
+            await octokit.rest.actions.deleteActionsCacheById({
+              owner: github.context.repo.owner,
+              repo: github.context.repo.repo,
+              cache_id: cache.id,
+            });
+          } catch (error) {
+            console.log(`Failed to delete cache ${cache.key};\n\n${error}`);
+          }
+        } else if (debug) {
+          if (accessed) {
+            console.log(`Skipping cache ${cache.key}, last accessed at ${accessedAt} after ${maxDate}`);
+          }
+          if (created) {
+            console.log(`Skipping cache ${cache.key}, created at ${createdAt} after ${maxDate}`);
+          }
+        }
+      }
+    });
   }
 }
 
