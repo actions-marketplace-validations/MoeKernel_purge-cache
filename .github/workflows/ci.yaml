@@ -14,16 +14,14 @@ jobs:
       contents: write
       actions: write
     steps:
-      - uses: actions/checkout@v3
-
-      # http://man7.org/linux/man-pages/man1/date.1.html
+      - uses: MoeKernel/checkout@v4.1.6
       - name: Get Date
         id: get-date
         run: |
           echo "date=$(/bin/date -u "+date-%Y-%m-%d-time-%H-%M-%S")" >> $GITHUB_OUTPUT
         shell: bash
 
-      - uses: actions/cache@v3
+      - uses: MoeKernel/cache@v3
         with:
           path: |
             ~/.npm
@@ -32,18 +30,16 @@ jobs:
             ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json', 'package.json') }}-
 
       - name: Install packages & Build the action
-        run: npm ci
+        run: |
+           npm ci
 
-      # -------- THIS ACTION --------
       - name: Purge caches
         uses: ./.
         with:
           debug: true
           created: true
           accessed: true
-          # 3 days
           max-age: 259200
-      # -------- THIS ACTION --------
 
       - name: Commit & Push changes
         if: github.event_name == 'push'
