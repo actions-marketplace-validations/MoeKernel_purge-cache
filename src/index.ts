@@ -8,7 +8,6 @@ function setFailedWrongValue(input: string, value: string) {
 enum Inputs {
   Debug = "debug",
   MaxAge = "max-age",
-  Accessed = "accessed",
   Token = "token",
   CacheKey = "cache_key"
 }
@@ -24,51 +23,37 @@ async function run() {
   const cacheKey = core.getInput(Inputs.CacheKey, { required: false });
   const octokit = github.getOctokit(token);
 
-  interface Cache {
-    id?: number | undefined;
-    key?: string | undefined;
+  if (!cacheKey) {
+    core.warning('No cache key specified. Skipping cache deletion.');
+    return;
   }
 
-  const results: Cache[] = [];
+  const { data: cachesRequest } = await octokit.rest.actions.getActionsCacheList({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    per_page: 100
+  });
 
-  for (let i = 1; i <= 100; i += 1) {
-    const { data: cachesRequest } = await octokit.rest.actions.getActionsCacheList({
-      owner: github.context.repo.owner,
-      repo: github.context.repo.repo,
-      per_page: 100,
-      page: i
-    });
+  const cacheToDelete = cachesRequest.actions_caches.find(cache => cache.key === cacheKey);
 
-    if (cachesRequest.actions_caches.length === 0) {
-      break;
-    }
-
-    results.push(...cachesRequest.actions_caches);
+  if (!cacheToDelete || cacheToDelete.id === undefined) {
+    core.warning(`No cache found with key ${cacheKey}.`);
+    return;
   }
 
   if (debug) {
-    console.log(`Found ${results.length} caches`);
+    console.log(`Deleting cache with key ${cacheKey}`);
   }
 
-  if (cacheKey) {
-    const cacheToDelete = results.find(cache => cache.key === cacheKey);
-
-    if (cacheToDelete && cacheToDelete.id !== undefined) {
-      try {
-        await octokit.rest.actions.deleteActionsCacheById({
-          owner: github.context.repo.owner,
-          repo: github.context.repo.repo,
-          cache_id: cacheToDelete.id!,
-        });
-        core.info(`Cache with key ${cacheKey} deleted successfully.`);
-      } catch (error) {
-        core.setFailed(`Failed to delete cache ${cacheKey};\n\n${error}`);
-      }
-    } else {
-      core.warning(`No cache found with key ${cacheKey}.`);
-    }
-  } else if (debug) {
-    console.log('No cache key specified. Skipping cache deletion.');
+  try {
+    await octokit.rest.actions.deleteActionsCacheById({
+      owner: github.context.repo.owner,
+      repo: github.context.repo.repo,
+      cache_id: cacheToDelete.id,
+    });
+    core.info(`Cache with key ${cacheKey} deleted successfully.`);
+  } catch (error) {
+    core.setFailed(`Failed to delete cache ${cacheKey};\n\n${error}`);
   }
 }
 
