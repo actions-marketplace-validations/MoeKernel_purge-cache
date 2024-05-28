@@ -2,7 +2,7 @@ import * as github from '@actions/github';
 import * as core from '@actions/core';
 
 function setFailedWrongValue(input: string, value: string) {
-  core.setFailed(`Wrong value for the input '${input}': ${value}`);
+  core.setFailed(`Valor incorreto para o input '${input}': ${value}`);
 }
 
 enum Inputs {
@@ -56,11 +56,11 @@ async function run() {
   }
 
   if (debug) {
-    console.log(`Found ${results.length} caches`);
+    console.log(`Encontrados ${results.length} caches`);
   }
 
   results.forEach(async (cache) => {
-    if (cache.key !== undefined && cache.key === cacheKey) {  // Verificação do cache_key
+    if (cache.key === cacheKey) {  // Verificação do cache_key
       if (cache.last_accessed_at !== undefined && cache.created_at !== undefined && cache.id !== undefined) {
         const accessedAt = new Date(cache.last_accessed_at);
         const createdAt = new Date(cache.created_at);
@@ -69,34 +69,33 @@ async function run() {
         if (accessedCondition || createdCondition) {
           if (debug) {
             if (accessedCondition) {
-              console.log(`Deleting cache ${cache.key}, last accessed at ${accessedAt} before ${maxDate}`);
+              console.log(`Deletando cache ${cache.key}, último acesso em ${accessedAt} antes de ${maxDate}`);
             }
             if (createdCondition) {
-              console.log(`Deleting cache ${cache.key}, created at ${createdAt} before ${maxDate}`);
+              console.log(`Deletando cache ${cache.key}, criado em ${createdAt} antes de ${maxDate}`);
             }
           }
 
           try {
             await octokit.rest.actions.deleteActionsCacheById({
-              per_page: 100,
               owner: github.context.repo.owner,
               repo: github.context.repo.repo,
               cache_id: cache.id,
             });
           } catch (error) {
-            console.log(`Failed to delete cache ${cache.key};\n\n${error}`);
+            console.log(`Falha ao deletar o cache ${cache.key};\n\n${error}`);
           }
         } else if (debug) {
           if (accessed) {
-            console.log(`Skipping cache ${cache.key}, last accessed at ${accessedAt} after ${maxDate}`);
+            console.log(`Ignorando cache ${cache.key}, último acesso em ${accessedAt} após ${maxDate}`);
           }
           if (created) {
-            console.log(`Skipping cache ${cache.key}, created at ${createdAt} after ${maxDate}`);
+            console.log(`Ignorando cache ${cache.key}, criado em ${createdAt} após ${maxDate}`);
           }
         }
       }
     } else if (debug) {
-      console.log(`Skipping cache ${cache.key} because it does not match the provided cache_key`);
+      console.log(`Ignorando cache ${cache.key} porque não corresponde ao cache_key fornecido`);
     }
   });
 }
