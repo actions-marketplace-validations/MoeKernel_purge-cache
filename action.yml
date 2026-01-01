@@ -1,4 +1,4 @@
-name: "Purge cache for Moe"
+name: "Purge cache for SushiKernel"
 
 description: Purge GitHub Actions cache
 inputs:
